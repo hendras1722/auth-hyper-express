@@ -12,6 +12,8 @@ app.get('/', (req, res) => {
   res.send('ping')
 })
 
+app.use('/v1', Routes)
+
 // 404 handler
 app.use((req, res, next) => {
   res.status(404).json({ message: 'Route not found' })
@@ -22,8 +24,6 @@ app.use((err, req, res, next) => {
   console.error(err)
   res.status(500).json({ message: 'Internal Server Error' })
 })
-
-app.use('/v1', Routes)
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
