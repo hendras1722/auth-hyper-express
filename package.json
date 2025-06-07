@@ -1,0 +1,26 @@
+{
+  "name": "auth",
+  "version": "1.0.0",
+  "description": "this is auth login user",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "pm2 start index.js",
+    "stop": "pm2 stop all",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [
+    "oauth"
+  ],
+  "author": "Muh Syahendra Anindyantoro",
+  "license": "ISC",
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "nodemon": "^3.1.10",
+    "pm2": "^6.0.8",
+    "zod": "^3.25.56"
+  }
+}
