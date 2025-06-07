@@ -12,6 +12,17 @@ app.get('/', (req, res) => {
   res.send('ping')
 })
 
+// 404 handler
+app.use((req, res, next) => {
+  res.status(404).json({ message: 'Route not found' })
+})
+
+// General error handler
+app.use((err, req, res, next) => {
+  console.error(err)
+  res.status(500).json({ message: 'Internal Server Error' })
+})
+
 app.use('/v1', Routes)
 
 app.listen(port, () => {
