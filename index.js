@@ -8,37 +8,30 @@ const { StatusError } = require('./src/helpers/Status')
 
 const app = express()
 
-app.use(express.json())
-app.use(cookieParser())
-app.use(express.urlencoded({ extended: true }))
-
-app.get('/', (req, res) => {
-  res.send('ping')
-})
-
-app.use('/v1', Routes)
-
-// 404 handler
-app.use((req, res, next) => {
-  StatusError(res, 404, 'Route not found', 'Oh You are lost')
-})
-
-// General error handler
-app.use((err, req, res, next) => {
-  console.error(err)
-  StatusError(res, 404, 'Internal Server Error', 'Something wrong!')
-})
-
-// MongoDB connect middleware
-app.use(async (req, res, next) => {
-  try {
-    await connectDB()
-    next()
-  } catch (err) {
+app
+  .use(express.json())
+  .use(cookieParser())
+  .use(express.urlencoded({ extended: true }))
+  .use('/v1', Routes)
+  .get('/', (req, res) => {
+    res.send('ping')
+  })
+  .use((req, res, next) => {
+    StatusError(res, 404, 'Route not found', 'Oh You are lost')
+  })
+  .use((err, req, res, next) => {
     console.error(err)
-    res.status(500).json({ message: 'MongoDB connect failed' })
-  }
-})
+    StatusError(res, 500, 'Internal Server Error', 'Something wrong!')
+  })
+  .use(async (req, res, next) => {
+    try {
+      await connectDB()
+      next()
+    } catch (err) {
+      console.error(err)
+      res.status(500).json({ message: 'MongoDB connect failed' })
+    }
+  })
 
 if (require.main === module) {
   const port = process.env.PORT || 3000
