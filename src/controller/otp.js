@@ -4,15 +4,21 @@ const { ObjectId } = require('mongodb')
 const jwt = require('jsonwebtoken')
 const generateOTP = require('../helpers/generateOTP')
 const { generateAccessToken } = require('../helpers/jwt')
+const nodemailer = require('nodemailer')
+const { transporter } = require('../helpers/nodemailer')
+const handlebars = require('handlebars')
+const fs = require('fs')
+const path = require('path')
 
 require('dotenv').config()
 async function OtpToken(req, res) {
   try {
     const db = await connectDB()
     const { otp, id } = req.body
+
     const db_otp = await db
       .collection('otp')
-      .findOne({ userId: ObjectId.createFromHexString(id) })
+      .findOne({ userId: new ObjectId(id) })
 
     const isJwtValid = jwt.verify(db_otp.token, process.env.JWT_KEY)
 
@@ -29,9 +35,7 @@ async function OtpToken(req, res) {
     if (result.matchedCount === 0)
       return StatusError(res, 404, { code: 404, message: 'User not found' })
 
-    await db
-      .collection('otp')
-      .deleteOne({ userId: ObjectId.createFromHexString(id) })
+    await db.collection('otp').deleteOne({ userId: new ObjectId(id) })
 
     return StatusSuccess(res, 200, 'Success', {
       code: 200,
@@ -48,6 +52,26 @@ async function OtpToken(req, res) {
   }
 }
 
+async function readHTMLFile(data, email) {
+  const { from, to } = email
+
+  const templatePath = path.join(__dirname, '../templates/email.html')
+  const source = fs.readFileSync(templatePath, 'utf8')
+
+  const template = handlebars.compile(source)
+
+  const htmlToSend = template(data)
+
+  const mailOptions = {
+    from,
+    to,
+    subject: 'Hello, this is your OTP!',
+    html: htmlToSend,
+  }
+
+  return await transporter.sendMail(mailOptions)
+}
+
 async function GenerateOTPToken(req, res) {
   try {
     const db = await connectDB()
@@ -59,7 +83,11 @@ async function GenerateOTPToken(req, res) {
         .collection('otp')
         .updateOne({ email }, { $set: { otp: generateOTP(6) } })
       const generateIdOTP = await db.collection('otp').findOne({ email })
-      console.log(generateIdOTP)
+
+      await readHTMLFile(
+        { otp: generateIdOTP.otp },
+        { from: process.env.EMAIL, to: email }
+      )
       return StatusSuccess(res, 200, 'Success', {
         otp: generateIdOTP.userId,
       })
