@@ -5,6 +5,8 @@ const Routes = require('./src/routes')
 const cookieParser = require('cookie-parser')
 const { connectDB, client } = require('./src/configs/mongodb')
 const app = express()
+const serverless = require('serverless-http')
+
 const port = process.env.PORT || 3000
 
 app.use(express.json())
@@ -43,3 +45,4 @@ connectDB()
 //   await client.close()
 //   process.exit(0)
 // })
+module.exports.handler = serverless(app)
