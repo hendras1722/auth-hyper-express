@@ -26,8 +26,8 @@ async function Login(req, res) {
     if (result.password !== HashPassword) {
       return StatusError(res, 401, 'Invalid password')
     }
-    const token = generateAccessToken({ id: result.insertedId })
-    const refreshToken = generateRefreshToken({ id: result.insertedId })
+    const token = generateAccessToken({ id: result._id })
+    const refreshToken = generateRefreshToken({ id: result._id })
     res
       .cookie('refreshToken', refreshToken, {
         httpOnly: true,

@@ -7,6 +7,7 @@ const { MethodPOST, MethodGET } = require('../helpers/method')
 const { Logout } = require('../controller/logout')
 const { OtpToken, GenerateOTPToken } = require('../controller/otp')
 const rateLimit = require('express-rate-limit')
+const { GetMe } = require('../controller/profile')
 
 const Routes = express.Router()
 
@@ -29,5 +30,6 @@ Routes.use('/auth/refresh-token', MethodGET, RefreshToken)
 Routes.use('/auth/logout', MethodGET, Logout)
 Routes.use('/auth/otp', MethodPOST, OtpToken)
 Routes.use('/auth/generate-otp', MethodPOST, limiter, GenerateOTPToken)
+Routes.use('/auth/getme', MethodGET, GetMe)
 
 module.exports = Routes
