@@ -4,6 +4,7 @@ require('dotenv').config()
 const uri = process.env.DB
 
 const client = new MongoClient(uri, {
+  tls: true,
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
