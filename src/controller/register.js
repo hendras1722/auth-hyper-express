@@ -85,16 +85,15 @@ async function RegisterOtp(req, res) {
     const insertResult = await db
       .collection('users')
       .insertOne({ email, password: HashPassword, active: false })
-    const tokenOtp = generateAccessToken({ otp: insertResult.insertedId }, '5d')
+    const tokenOtp = generateAccessToken({ otp: insertResult.insertedId }, '2m')
     const otp = generateOTP(6)
-    const otpInsert = await db.collection('otp').insertOne({
+
+    await db.collection('otp').insertOne({
       email,
       otp,
       token: tokenOtp,
       userId: insertResult.insertedId,
     })
-
-    console.log(otpInsert, 'optinser')
 
     await readHTMLFile({ otp }, { from: process.env.EMAIL, to: email })
 

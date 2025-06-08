@@ -20,12 +20,14 @@ async function OtpToken(req, res) {
       .collection('otp')
       .findOne({ userId: new ObjectId(id) })
 
+    if (!db_otp) return StatusError(res, 404, 'Otp not found')
+
     const isJwtValid = jwt.verify(db_otp.token, process.env.JWT_KEY)
 
     if (!db_otp) return StatusError(res, 404, 'Otp not found')
     if (db_otp.otp !== otp) return StatusError(res, 400, 'Invalid otp')
     if (isJwtValid.exp < Math.floor(Date.now() / 1000))
-      return StatusError(res, 400, 'Otp expired')
+      return StatusError(res, 410, 'Otp expired')
 
     const userId = db_otp.userId
     const result = await db
