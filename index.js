@@ -38,8 +38,8 @@ connectDB()
   .catch(console.error)
 
 // Tutup MongoDB ketika server mati
-process.on('SIGINT', async () => {
-  console.log('Closing MongoDB connection...')
-  await client.close()
-  process.exit(0)
-})
+// process.on('SIGINT', async () => {
+//   console.log('Closing MongoDB connection...')
+//   await client.close()
+//   process.exit(0)
+// })
