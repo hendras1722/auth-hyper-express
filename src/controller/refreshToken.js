@@ -3,7 +3,10 @@ const jwt = require('jsonwebtoken')
 function RefreshToken(req, res) {
   const refreshToken = req.cookies?.['refreshToken']
   if (!refreshToken) {
-    return res.status(401).send('Access Denied. No refresh token provided.')
+    return res.status(401).send({
+      code: 401,
+      message: 'Unauthorized',
+    })
   }
 
   try {
