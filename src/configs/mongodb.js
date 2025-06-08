@@ -1,7 +1,7 @@
 const { MongoClient, ServerApiVersion } = require('mongodb')
 
-const uri =
-  'mongodb+srv://muhsyahendraa1722:u8roK9xYomzALgAB@auth.grdevij.mongodb.net/?retryWrites=true&w=majority&appName=auth'
+require('dotenv').config()
+const uri = process.env.DB
 
 const client = new MongoClient(uri, {
   serverApi: {
