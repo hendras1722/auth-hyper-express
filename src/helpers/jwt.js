@@ -1,11 +1,12 @@
 const jwt = require('jsonwebtoken')
 
+require('dotenv').config()
 function generateAccessToken(username) {
-  return jwt.sign(username, 'secret', { expiresIn: '1800s' })
+  return jwt.sign(username, process.env.JWT_KEY, { expiresIn: '1800s' })
 }
 
 function generateRefreshToken(username) {
-  return jwt.sign(username, 'secret_refresh', {
+  return jwt.sign(username, process.env.JWT_SECRET_REFRESH, {
     expiresIn: '7d',
   })
 }

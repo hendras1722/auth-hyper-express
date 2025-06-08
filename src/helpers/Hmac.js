@@ -1,6 +1,8 @@
 const { createHmac } = require('crypto')
+
+require('dotenv').config()
 function hashingHmac(message) {
-  const SECRET = 'msa123456789'
+  const SECRET = process.env.SECRET_KEY
   const hmac = createHmac('sha256', SECRET)
   hmac.update(message)
 
