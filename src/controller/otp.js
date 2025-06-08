@@ -81,9 +81,13 @@ async function GenerateOTPToken(req, res) {
     const checkEmail = await db.collection('otp').findOne({ email })
     if (!checkEmail) return StatusError(res, 404, 'Otp not found')
     if (checkEmail) {
+      const tokenOtp = generateAccessToken({ otp: checkEmail._id }, '2m')
       await db
         .collection('otp')
-        .updateOne({ email }, { $set: { otp: generateOTP(6) } })
+        .updateOne(
+          { email },
+          { $set: { otp: generateOTP(6), token: tokenOtp } }
+        )
       const generateIdOTP = await db.collection('otp').findOne({ email })
 
       await readHTMLFile(
