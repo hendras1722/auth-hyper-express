@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken')
 const { StatusError, StatusSuccess } = require('../helpers/Status')
+const { generateAccessToken } = require('../helpers/jwt')
 
 function RefreshToken(req, res) {
   const refreshToken = req.cookies?.['refreshToken']
@@ -9,9 +10,7 @@ function RefreshToken(req, res) {
 
   try {
     const decoded = jwt.verify(refreshToken, 'secret_refresh')
-    const accessToken = jwt.sign({ user: decoded.user }, 'secret', {
-      expiresIn: '1h',
-    })
+    const accessToken = generateAccessToken({ user: decoded.user })
 
     res.header('Authorization', accessToken)
     res.cookie('accessToken', accessToken, {
