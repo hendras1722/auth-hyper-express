@@ -1,18 +1,36 @@
 const { z } = require('zod')
 const { validationZod } = require('../helpers/zod')
 const { generateAccessToken, generateRefreshToken } = require('../helpers/jwt')
+const { connectDB } = require('../configs/mongodb')
 
-const schemaLogin = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-})
+const schemaLogin = z
+  .object({
+    email: z.string().email(),
+    password: z.string().min(6),
+  })
+  .strict()
 
 async function Login(req, res) {
   try {
+    const db = await connectDB()
     const { email, password } = req.body
     await validationZod(schemaLogin, { email, password })
-    const token = generateAccessToken({ username: email })
-    const refreshToken = generateRefreshToken({ username: email })
+    const result = await db.collection('users').findOne({ email })
+    if (!result) {
+      return res.status(404).json({
+        code: 404,
+        message: 'User not found',
+      })
+    }
+
+    if (result.password !== password) {
+      return res.status(401).json({
+        code: 401,
+        message: 'Invalid password',
+      })
+    }
+    const token = generateAccessToken({ id: result.insertedId })
+    const refreshToken = generateRefreshToken({ id: result.insertedId })
     res
       .cookie('refreshToken', refreshToken, {
         httpOnly: true,

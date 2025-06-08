@@ -1,17 +1,22 @@
 const { z } = require('zod')
 const { validationZod } = require('../helpers/zod')
 const hashingHmac = require('../helpers/Hmac')
+const { connectDB } = require('../configs/mongodb')
 
-const schemaRegister = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-})
+const schemaRegister = z
+  .object({
+    email: z.string().email(),
+    password: z.string().min(6),
+  })
+  .strict()
 
 async function Register(req, res) {
   try {
+    const db = await connectDB()
     const { email, password } = req.body
     await validationZod(schemaRegister, req.body)
     const HashPassword = await hashingHmac(password)
+    await db.collection('users').insertOne(req.body)
     return res.status(200).json({
       code: 200,
       message: 'Success',
