@@ -22,12 +22,17 @@ async function Register(req, res) {
       })
     await validationZod(schemaRegister, req.body)
     const HashPassword = await hashingHmac(password)
-    await db.collection('users').insertOne({ email, password: HashPassword })
-    const result = await db.collection('users').findOne({ email })
+    const insertResult = await db
+      .collection('users')
+      .insertOne({ email, password: HashPassword })
+    // // const result = await db
+    // //   .collection('users')
+    // //   .findOne({ _id: insertResult.insertedId })
+    // console.log(result)
     return res.status(200).json({
       code: 200,
       message: 'Success',
-      data: { id: result.insertedId, email },
+      data: { id: insertResult.insertedId, email },
     })
   } catch (error) {
     console.log(error.message)
