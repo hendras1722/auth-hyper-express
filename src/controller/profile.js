@@ -10,7 +10,6 @@ async function GetMe(req, res) {
     if (!authorization?.includes('Bearer'))
       return StatusError(res, 401, 'Unauthorized')
     const token = authorization.split(' ')[1]
-    console.log(token)
     const decoded = jwt.verify(token, 'secret')
     const expired = decoded.exp * 1000
     if (expired < Date.now()) return StatusError(res, 401, 'Unauthorized')
