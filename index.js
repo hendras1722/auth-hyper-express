@@ -4,6 +4,7 @@ const express = require('express')
 const Routes = require('./src/routes')
 const cookieParser = require('cookie-parser')
 const { connectDB } = require('./src/configs/mongodb')
+const { StatusError } = require('./src/helpers/Status')
 
 const app = express()
 
@@ -19,13 +20,13 @@ app.use('/v1', Routes)
 
 // 404 handler
 app.use((req, res, next) => {
-  res.status(404).json({ message: 'Route not found' })
+  StatusError(res, 404, 'Route not found', 'Oh You are lost')
 })
 
 // General error handler
 app.use((err, req, res, next) => {
   console.error(err)
-  res.status(500).json({ message: 'Internal Server Error' })
+  StatusError(res, 404, 'Internal Server Error', 'Something wrong!')
 })
 
 // MongoDB connect middleware

@@ -2,6 +2,8 @@ const { z } = require('zod')
 const { validationZod } = require('../helpers/zod')
 const { generateAccessToken, generateRefreshToken } = require('../helpers/jwt')
 const { connectDB } = require('../configs/mongodb')
+const { StatusError, StatusSuccess } = require('../helpers/Status')
+const hashingHmac = require('../helpers/Hmac')
 
 const schemaLogin = z
   .object({
@@ -15,19 +17,14 @@ async function Login(req, res) {
     const db = await connectDB()
     const { email, password } = req.body
     await validationZod(schemaLogin, { email, password })
+    const HashPassword = await hashingHmac(password)
     const result = await db.collection('users').findOne({ email })
     if (!result) {
-      return res.status(404).json({
-        code: 404,
-        message: 'User not found',
-      })
+      return StatusError(res, 404, 'User not found')
     }
 
-    if (result.password !== password) {
-      return res.status(401).json({
-        code: 401,
-        message: 'Invalid password',
-      })
+    if (result.password !== HashPassword) {
+      return StatusError(res, 401, 'Invalid password')
     }
     const token = generateAccessToken({ id: result.insertedId })
     const refreshToken = generateRefreshToken({ id: result.insertedId })
@@ -38,11 +35,7 @@ async function Login(req, res) {
       })
       .header('Authorization', token)
 
-    return res.status(200).json({
-      code: 200,
-      message: 'Success',
-      data: { token, refreshToken },
-    })
+    return StatusSuccess(res, 200, 'Success', { token, refreshToken })
   } catch (error) {
     console.log(error.message)
 
@@ -51,18 +44,9 @@ async function Login(req, res) {
         field: err.path.join('.'),
         message: err.message,
       }))
-      return res.status(400).json({
-        code: 400,
-        message: 'Bad Request',
-        errors,
-      })
+      return StatusError(res, 400, 'Bad Request', errors)
     }
-
-    res.status(400).json({
-      code: 400,
-      message: 'Bad Request',
-      error: error.message || error.toString(),
-    })
+    StatusError(res, 400, 'Bad Request', error.message || error.toString())
   }
 }
 

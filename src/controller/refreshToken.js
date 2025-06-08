@@ -1,12 +1,10 @@
 const jwt = require('jsonwebtoken')
+const { StatusError, StatusSuccess } = require('../helpers/Status')
 
 function RefreshToken(req, res) {
   const refreshToken = req.cookies?.['refreshToken']
   if (!refreshToken) {
-    return res.status(401).send({
-      code: 401,
-      message: 'Unauthorized',
-    })
+    return StatusError(res, 401, 'Unauthorized')
   }
 
   try {
@@ -21,11 +19,7 @@ function RefreshToken(req, res) {
       sameSite: 'strict',
     })
 
-    return res.status(200).json({
-      code: 200,
-      message: 'Success',
-      data: { accessToken },
-    })
+    return StatusSuccess(res, 200, 'Success', { accessToken })
   } catch (error) {
     console.log(error.response)
     if (error.errors) {
@@ -33,17 +27,14 @@ function RefreshToken(req, res) {
         field: err.path.join('.'),
         message: err.message,
       }))
-      return res.status(400).json({
-        code: 400,
-        message: 'Invalid Refresh Token',
-        errors,
-      })
+      return StatusError(res, 400, 'Invalid Refresh Token', errors)
     }
-    res.status(400).json({
-      code: 400,
-      message: 'Invalid Refresh Token',
-      error: error.message || error.toString(),
-    })
+    StatusError(
+      res,
+      400,
+      'Invalid Refresh Token',
+      error.message ?? error.toString()
+    )
   }
 }
 

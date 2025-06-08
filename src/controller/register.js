@@ -2,6 +2,7 @@ const { z } = require('zod')
 const { validationZod } = require('../helpers/zod')
 const hashingHmac = require('../helpers/Hmac')
 const { connectDB } = require('../configs/mongodb')
+const { StatusSuccess, StatusError } = require('../helpers/Status')
 
 const schemaRegister = z
   .object({
@@ -15,24 +16,17 @@ async function Register(req, res) {
     const db = await connectDB()
     const { email, password } = req.body
     const checkEmail = await db.collection('users').findOne({ email })
-    if (checkEmail)
-      return res.status(400).json({
-        code: 400,
-        message: 'Email already exists',
-      })
+    if (checkEmail) return StatusError(res, 400, 'Email already exists')
+
     await validationZod(schemaRegister, req.body)
     const HashPassword = await hashingHmac(password)
     const insertResult = await db
       .collection('users')
       .insertOne({ email, password: HashPassword })
-    // // const result = await db
-    // //   .collection('users')
-    // //   .findOne({ _id: insertResult.insertedId })
-    // console.log(result)
-    return res.status(200).json({
-      code: 200,
-      message: 'Success',
-      data: { id: insertResult.insertedId, email },
+
+    return StatusSuccess(res, 200, 'Success', {
+      id: insertResult.insertedId,
+      email,
     })
   } catch (error) {
     console.log(error.message)
@@ -41,17 +35,9 @@ async function Register(req, res) {
         field: err.path.join('.'),
         message: err.message,
       }))
-      return res.status(400).json({
-        code: 400,
-        message: 'Bad Request',
-        errors,
-      })
+      return StatusError(res, 400, 'Bad Request', errors)
     }
-    res.status(400).json({
-      code: 400,
-      message: 'Bad Request',
-      error: error.message || error.toString(),
-    })
+    StatusError(res, 400, 'Bad Request', error.message || error.toString())
   }
 }
 
