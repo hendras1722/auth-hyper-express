@@ -12,6 +12,8 @@ const schemaLogin = z
   })
   .strict()
 
+const Email = z.string().email()
+
 async function Login(req, res) {
   try {
     const db = await connectDB()
@@ -50,6 +52,30 @@ async function Login(req, res) {
   }
 }
 
+async function CheckEmail(req, res) {
+  try {
+    const db = await connectDB()
+    const { email } = req.body
+    validationZod(Email, email)
+    const result = await db.collection('users').findOne({ email })
+    if (!result) {
+      return StatusError(res, 404, 'User not found')
+    }
+    delete result.password
+    return StatusSuccess(res, 200, 'Success user found', { ...result })
+  } catch (error) {
+    if (error.errors) {
+      const errors = error.errors.map((err) => ({
+        field: err.path.join('.'),
+        message: err.message,
+      }))
+      return StatusError(res, 400, 'Bad Request', errors)
+    }
+    StatusError(res, 400, 'Bad Request', error.message || error.toString())
+  }
+}
+
 module.exports = {
   Login,
+  CheckEmail,
 }

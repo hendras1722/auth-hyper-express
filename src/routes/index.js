@@ -1,5 +1,5 @@
 const express = require('express')
-const { Login } = require('../controller/login')
+const { Login, CheckEmail } = require('../controller/login')
 const { Register, RegisterOtp } = require('../controller/register')
 const auth = require('../helpers/authenticate')
 const { RefreshToken } = require('../controller/refreshToken')
@@ -31,5 +31,6 @@ Routes.use('/auth/logout', MethodGET, Logout)
 Routes.use('/auth/otp', MethodPOST, OtpToken)
 Routes.use('/auth/generate-otp', MethodPOST, limiter, GenerateOTPToken)
 Routes.use('/auth/getme', MethodGET, GetMe)
+Routes.use('/auth/check-email', MethodPOST, CheckEmail)
 
 module.exports = Routes
