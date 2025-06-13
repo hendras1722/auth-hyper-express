@@ -8,6 +8,7 @@ const { StatusError } = require('./src/helpers/Status')
 const swaggerUI = require('swagger-ui-express')
 const swaggerSpec = require('./src/configs/swagger')
 const cors = require('cors')
+const path = require('path')
 
 const app = express()
 
@@ -15,8 +16,14 @@ app
   .use(cors())
   .use(express.json())
   .use(cookieParser())
+  .use(express.static(path.join(__dirname, 'public')))
   .use(express.urlencoded({ extended: true }))
-  .use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec))
+  .use(
+    '/docs',
+    swaggerUI.serve,
+    swaggerUI.setup(swaggerSpec),
+    express.static(path.join(__dirname, '../public/swagger-ui'))
+  )
   .use('/v1', Routes)
   .get('/', (req, res) => {
     res.send('ping')
