@@ -30,7 +30,7 @@ Routes.use('/auth/refresh-token', MethodGET, RefreshToken)
 Routes.use('/auth/logout', MethodGET, Logout)
 Routes.use('/auth/otp', MethodPOST, OtpToken)
 Routes.use('/auth/generate-otp', MethodPOST, limiter, GenerateOTPToken)
-Routes.use('/auth/getme', MethodGET, GetMe)
+Routes.use('/getme', MethodGET, GetMe)
 Routes.use('/auth/check-email', MethodPOST, CheckEmail)
 
 module.exports = Routes

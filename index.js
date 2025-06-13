@@ -5,13 +5,18 @@ const Routes = require('./src/routes')
 const cookieParser = require('cookie-parser')
 const { connectDB } = require('./src/configs/mongodb')
 const { StatusError } = require('./src/helpers/Status')
+const swaggerUI = require('swagger-ui-express')
+const swaggerSpec = require('./src/configs/swagger')
+const cors = require('cors')
 
 const app = express()
 
 app
+  .use(cors())
   .use(express.json())
   .use(cookieParser())
   .use(express.urlencoded({ extended: true }))
+  .use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec))
   .use('/v1', Routes)
   .get('/', (req, res) => {
     res.send('ping')
