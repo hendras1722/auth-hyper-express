@@ -21,8 +21,28 @@ app
   .use(
     '/docs',
     swaggerUI.serve,
-    swaggerUI.setup(swaggerSpec),
-    express.static(path.join(__dirname, '../public/swagger-ui'))
+    swaggerUI.setup(swaggerSpec, {
+      customJs: [
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-bundle.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-standalone-preset.min.js',
+      ],
+      customCssUrl: [
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css',
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-standalone-preset.min.css',
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.css',
+      ],
+      customCss: '.swagger-ui .topbar { display: none }',
+      customSiteTitle: 'The Cookies API Documentation',
+      customfavIcon: '/favicon.ico',
+      swaggerOptions: {
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        docExpansion: 'none',
+        filter: true,
+        showExtensions: true,
+        showCommonExtensions: true,
+      },
+    })
   )
   .use('/v1', Routes)
   .get('/', (req, res) => {
