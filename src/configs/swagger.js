@@ -16,11 +16,15 @@ const swaggerDefinition = {
       },
     },
   },
+  servers: [
+    { url: 'https://auth.syahendra.com' },
+    { url: 'http://localhost:3000' },
+  ],
 }
 
 const options = {
   swaggerDefinition,
-  apis: ['./src/routes/*.js'],
+  apis: ['src/routes/*.js'],
 }
 
 const swaggerSpec = swaggerJSDoc(options)
