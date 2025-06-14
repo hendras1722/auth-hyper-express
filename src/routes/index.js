@@ -296,6 +296,23 @@ const Routes = express.Router()
  *                      data: null
  */
 
+/**
+ * @swagger
+ * /v1/auth/logout:
+ *   get:
+ *     summary: logout auth
+ *     tags:
+ *       - Auth
+ *     responses:
+ *       200:
+ *         code:
+ *           type: integer
+ *           example: 200
+ *         message:
+ *           type: string
+ *           example: Success
+ */
+
 // /**
 //  * @swagger
 //  * /v1/user/upload:
