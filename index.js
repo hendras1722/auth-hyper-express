@@ -56,7 +56,7 @@ app.get('/swagger', (req, res) => {
         <script>
           window.onload = () => {
             SwaggerUIBundle({
-              url: '/swagger.json', // serve JSON kamu di sini
+              url: '/swagger.json',
               dom_id: '#swagger-ui',
               deepLinking: true,
               presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
