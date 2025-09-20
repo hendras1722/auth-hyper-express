@@ -24,11 +24,11 @@ require('dotenv').config()
 async function Register(req, res) {
   try {
     const db = await connectDB()
-    const { email, password } = req.body
+    const { email, password } = await req.json()
     const checkEmail = await db.collection('users').findOne({ email })
     if (checkEmail) return StatusError(res, 400, 'Email already exists')
 
-    await validationZod(schemaRegister, { ...req.body, active: true })
+    await validationZod(schemaRegister, { email, password, active: true })
     const HashPassword = await hashingHmac(password)
 
     const insertResult = await db
@@ -75,11 +75,11 @@ async function readHTMLFile(data, email) {
 async function RegisterOtp(req, res) {
   try {
     const db = await connectDB()
-    const { email, password } = req.body
+    const { email, password } = await req.json()
     const checkEmail = await db.collection('users').findOne({ email })
     if (checkEmail) return StatusError(res, 400, 'Email already exists')
 
-    await validationZod(schemaRegister, { ...req.body, active: true })
+    await validationZod(schemaRegister, { email, password, active: true })
     const HashPassword = await hashingHmac(password)
 
     const insertResult = await db

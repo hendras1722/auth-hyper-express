@@ -17,7 +17,7 @@ const Email = z.string().email()
 async function Login(req, res) {
   try {
     const db = await connectDB()
-    const { email, password } = req.body
+    const { email, password } = await req.json()
     await validationZod(schemaLogin, { email, password })
     const HashPassword = await hashingHmac(password)
     const result = await db.collection('users').findOne({ email })
@@ -55,7 +55,7 @@ async function Login(req, res) {
 async function CheckEmail(req, res) {
   try {
     const db = await connectDB()
-    const { email } = req.body
+    const { email } = await req.json()
     validationZod(Email, email)
     const result = await db.collection('users').findOne({ email })
     if (!result) {

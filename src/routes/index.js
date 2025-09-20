@@ -1,83 +1,30 @@
-const express = require('express')
+const { Router } = require('hyper-express')
 const { Login, CheckEmail } = require('../controller/login')
 const { Register, RegisterOtp } = require('../controller/register')
-const auth = require('../helpers/authenticate')
 const { RefreshToken } = require('../controller/refreshToken')
-const { MethodPOST, MethodGET } = require('../helpers/method')
 const { Logout } = require('../controller/logout')
 const { OtpToken, GenerateOTPToken } = require('../controller/otp')
-const rateLimit = require('express-rate-limit')
 const { GetMe } = require('../controller/profile')
+const { expressToHyper, rateLimit } = require('../helpers/expressRateLimitWrapper')
+const auth = require('../helpers/authenticate')
+const { RegisterOtpRoute } = require('./register-otp')
 
-const Routes = express.Router()
+const Routes = new Router()
 
-/**
- * @swagger
- * /v1/auth/refresh-token:
- *   get:
- *     tags:
- *       - Auth
- *     summary: Get a refresh token
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Successful response
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 code:
- *                   type: integer
- *                   example: 200
- *                 message:
- *                   type: string
- *                   example: Success
- *                 data:
- *                   type: object
- *                   properties:
- *                      accessToken:
- *                         type: string
- *                         example: ''
- */
+const limiter = rateLimit({
+  windowMs: 2 * 60 * 1000, // 2 minutes
+  max: 3, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests, please try again later.',
+  handler: (req, res) => {
+    res.status(400).json({
+      code: 429,
+      message: 'Too many requests, please try again later.',
+    })
+  },
+})
 
-/**
- * @swagger
- * /v1/getme:
- *   get:
- *     tags:
- *       - Profile
- *     summary: Get a refresh token
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Successful response
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 code:
- *                   type: integer
- *                   example: 200
- *                 message:
- *                   type: string
- *                   example: Success
- *                 data:
- *                   type: object
- *                   properties:
- *                      _id:
- *                         type: string
- *                         example: ''
- *                      email:
- *                         type: string
- *                         example: ''
- *                      active:
- *                         type: boolean
- *                         example: false
- */
+// Create a rate limiter using the express-rate-limit wrapper
+const otpLimiter = expressToHyper(limiter);
 
 /**
  * @swagger
@@ -95,79 +42,15 @@ const Routes = express.Router()
  *             properties:
  *               email:
  *                 type: string
- *                 example: ''
+ *                 example: 'user@example.com'
  *               password:
  *                 type: string
- *                 example: ''
+ *                 example: 'password123'
  *     responses:
  *       200:
  *         description: Successful response
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 code:
- *                   type: integer
- *                   example: 200
- *                 message:
- *                   type: string
- *                   example: Success
- *                 data:
- *                   type: object
- *                   properties:
- *                      accessToken:
- *                         type: string
- *                         example: ''
- *                      refreshToken:
- *                         type: string
- *                         example: ''
  */
-
-/**
- * @swagger
- * /v1/auth/check-email:
- *   post:
- *     tags:
- *       - Auth
- *     summary: check available user
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *                 example: ''
- *     responses:
- *       200:
- *         description: Successful response
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 code:
- *                   type: integer
- *                   example: 200
- *                 message:
- *                   type: string
- *                   example: Success
- *                 data:
- *                   type: object
- *                   properties:
- *                      _id:
- *                        type: string
- *                        example: ''
- *                      email:
- *                        type: string
- *                        example: ''
- *                      active:
- *                         type: boolean
- *                         example: false
- */
+Routes.post('/auth/login', Login)
 
 /**
  * @swagger
@@ -185,34 +68,15 @@ const Routes = express.Router()
  *             properties:
  *               email:
  *                 type: string
- *                 example: ''
+ *                 example: 'user@example.com'
  *               password:
  *                 type: string
- *                 example: ''
+ *                 example: 'password123'
  *     responses:
  *       200:
  *         description: Successful response
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 code:
- *                   type: integer
- *                   example: 200
- *                 message:
- *                   type: string
- *                   example: Success
- *                 data:
- *                   type: object
- *                   properties:
- *                      id:
- *                         type: string
- *                         example: ''
- *                      email:
- *                         type: string
- *                         example: ''
  */
+Routes.post('/auth/register', Register)
 
 /**
  * @swagger
@@ -220,7 +84,8 @@ const Routes = express.Router()
  *   post:
  *     tags:
  *       - Auth
- *     summary: register user
+ *     summary: Register user and send OTP
+ *     description: Creates a new user (inactive) and sends an OTP to their email for verification. Subject to rate limiting.
  *     requestBody:
  *       required: true
  *       content:
@@ -230,31 +95,47 @@ const Routes = express.Router()
  *             properties:
  *               email:
  *                 type: string
- *                 example: ''
+ *                 example: 'user@example.com'
  *               password:
  *                 type: string
- *                 example: ''
+ *                 example: 'password123'
+ *     responses:
+ *       200:
+ *         description: OTP sent successfully. The `otp` field in the response is the user ID to be used in the /auth/otp step.
+ *       429:
+ *         description: Too many requests.
+ */
+Routes.use('/auth/register-otp', otpLimiter, RegisterOtpRoute)
+
+/**
+ * @swagger
+ * /v1/auth/refresh-token:
+ *   get:
+ *     tags:
+ *       - Auth
+ *     summary: Get a new access token using a refresh token
+ *     description: The refresh token must be sent as an httpOnly cookie.
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Successful response
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 code:
- *                   type: integer
- *                   example: 200
- *                 message:
- *                   type: string
- *                   example: Success
- *                 data:
- *                   type: object
- *                   properties:
- *                      otp:
- *                         type: string
- *                         example: ''
  */
+Routes.get('/auth/refresh-token', RefreshToken)
+
+/**
+ * @swagger
+ * /v1/auth/logout:
+ *   get:
+ *     summary: Logout user
+ *     tags:
+ *       - Auth
+ *     description: Clears the refresh token cookie.
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ */
+Routes.get('/auth/logout', Logout)
 
 /**
  * @swagger
@@ -262,7 +143,8 @@ const Routes = express.Router()
  *   post:
  *     tags:
  *       - Auth
- *     summary: register user
+ *     summary: Verify OTP
+ *     description: Verify the OTP to activate a new user account.
  *     requestBody:
  *       required: true
  *       content:
@@ -272,93 +154,80 @@ const Routes = express.Router()
  *             properties:
  *               otp:
  *                 type: string
- *                 example: ''
+ *                 example: '123456'
  *               id:
  *                 type: string
- *                 example: ''
+ *                 example: '60c72b2f9b1d8c001f8e4d1c'
  *     responses:
  *       200:
- *         description: Successful response
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 code:
- *                   type: integer
- *                   example: 200
- *                 message:
- *                   type: string
- *                   example: Success
- *                 data:
- *                   type: object
- *                   properties:
- *                      data: null
+ *         description: OTP verified successfully, user is now active.
  */
+Routes.post('/auth/otp', OtpToken)
 
 /**
  * @swagger
- * /v1/auth/logout:
- *   get:
- *     summary: logout auth
+ * /v1/auth/generate-otp:
+ *   post:
  *     tags:
  *       - Auth
+ *     summary: Resend OTP
+ *     description: Generates and sends a new OTP to a user's email. Subject to rate limiting.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: 'user@example.com'
  *     responses:
  *       200:
- *         code:
- *           type: integer
- *           example: 200
- *         message:
- *           type: string
- *           example: Success
+ *         description: New OTP sent successfully.
+ *       429:
+ *         description: Too many requests.
  */
+Routes.use('/auth/generate-otp', limiter, GenerateOTPToken)
 
-// /**
-//  * @swagger
-//  * /v1/user/upload:
-//  *   post:
-//  *     summary: Upload user profile
-//  *     requestBody:
-//  *       required: true
-//  *       content:
-//  *         multipart/form-data:
-//  *           schema:
-//  *             type: object
-//  *             properties:
-//  *               name:
-//  *                 type: string
-//  *                 example: John Doe
-//  *               age:
-//  *                 type: integer
-//  *                 example: 30
-//  *               profile_picture:
-//  *                 type: string
-//  *                 format: binary
-//  *     responses:
-//  *       200:
-//  *         description: Upload successful
-//  */
+/**
+ * @swagger
+ * /v1/getme:
+ *   get:
+ *     tags:
+ *       - Profile
+ *     summary: Get current user profile
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successful response
+ */
+Routes.use('/getme', auth, GetMe)
 
-const limiter = rateLimit({
-  windowMs: 2 * 60 * 1000, // 2 minutes
-  max: 1, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests, please try again later.',
-  handler: (req, res) => {
-    res.status(400).json({
-      code: 429,
-      message: 'Too many requests, please try again later.',
-    })
-  },
-})
-
-Routes.use('/auth/login', MethodPOST, Login)
-Routes.use('/auth/register', MethodPOST, Register)
-Routes.use('/auth/register-otp', MethodPOST, limiter, RegisterOtp)
-Routes.use('/auth/refresh-token', MethodGET, RefreshToken)
-Routes.use('/auth/logout', MethodGET, Logout)
-Routes.use('/auth/otp', MethodPOST, OtpToken)
-Routes.use('/auth/generate-otp', MethodPOST, limiter, GenerateOTPToken)
-Routes.use('/getme', MethodGET, GetMe)
-Routes.use('/auth/check-email', MethodPOST, CheckEmail)
+/**
+ * @swagger
+ * /v1/auth/check-email:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Check if an email is already registered
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: 'user@example.com'
+ *     responses:
+ *       200:
+ *         description: User found
+ *       404:
+ *         description: User not found
+ */
+Routes.post('/auth/check-email', CheckEmail)
 
 module.exports = Routes

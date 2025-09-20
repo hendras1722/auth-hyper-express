@@ -9,7 +9,7 @@ function RefreshToken(req, res) {
   }
 
   try {
-    const decoded = jwt.verify(refreshToken, 'secret_refresh')
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET_REFRESH)
     const accessToken = generateAccessToken({ user: decoded.user })
 
     res.header('Authorization', accessToken)

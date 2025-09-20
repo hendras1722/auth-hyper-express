@@ -14,7 +14,7 @@ require('dotenv').config()
 async function OtpToken(req, res) {
   try {
     const db = await connectDB()
-    const { otp, id } = req.body
+    const { otp, id } = await req.json()
 
     const db_otp = await db
       .collection('otp')
@@ -77,7 +77,7 @@ async function readHTMLFile(data, email) {
 async function GenerateOTPToken(req, res) {
   try {
     const db = await connectDB()
-    const { email } = req.body
+    const { email } = await req.json()
     const checkEmail = await db.collection('otp').findOne({ email })
     if (!checkEmail) return StatusError(res, 404, 'Otp not found')
     if (checkEmail) {
