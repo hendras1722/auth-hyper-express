@@ -85,11 +85,11 @@ app.set_error_handler((req, res, error) => {
   StatusError(res, 500, 'Internal Server Error', 'Something wrong!')
 })
 
-if (require.main === module) {
-  const port = process.env.PORT || 3001
-  connectDB()
-    .then(() => {
-      console.log('MongoDB is ready')
+const port = process.env.PORT || 3001
+connectDB()
+  .then(() => {
+    console.log('MongoDB is ready')
+    if (process.env.NODE_ENV !== 'production') {
       app
         .listen(port)
         .then(() => {
@@ -99,11 +99,11 @@ if (require.main === module) {
           console.error(`Failed to start server: ${error}`)
           process.exit(1)
         })
-    })
-    .catch((err) => {
-      console.error('Failed to connect to MongoDB', err)
-      process.exit(1)
-    })
-}
+    }
+  })
+  .catch((err) => {
+    console.error('Failed to connect to MongoDB', err)
+    process.exit(1)
+  })
 
 module.exports = app
